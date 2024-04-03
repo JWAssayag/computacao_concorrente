@@ -6,4 +6,4 @@ arquivos{primeiro trabalho.c
 
 LAB 2
 
-arquivos{ lab2 soma.c , lab2 vtor.c}
+arquivos{ lab2 soma.c , lab2 vetor.c}
