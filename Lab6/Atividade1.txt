@@ -1,0 +1,5 @@
+2-
+As variáveis in e out controlam os índices de inserção e remoção no buffer. Elas são definidas como static dentro das funções Insere e Retira para garantir que mantenham seu valor entre chamadas consecutivas, permitindo que a insersão e retirda de itens na ordem correta. Evita condições de corrida, enquanto mantém seu escopo limitado às funções onde são utilizadas.
+
+4-
+Sim, o programa funcionou corretamente. As impressões do estado do buffer mostram que os produtores e consumidores estão funcionando corretamente.
