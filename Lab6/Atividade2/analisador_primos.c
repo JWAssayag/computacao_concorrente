@@ -1,3 +1,8 @@
+// Comando de compilação: gcc -o analisador_primos analisador_primos.c -lm -pthread
+// Método de uso: ./analisador_primos <arquivo_binario>
+// Exemplo de uso: ./analisador_primos arquivo.bin
+// Isso processará os números contidos no arquivo binário fornecido e imprimirá os primos encontrados.
+
 // Observação todas as linhas de print de inserção e retirada no buffer foram comentadas para evitar a poluição visual de informação dorante os testes e tbm as linhas de comando de orint de determinação se o numero é primo ou não
 #include <stdio.h>
 #include <stdlib.h>

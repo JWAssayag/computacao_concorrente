@@ -1,3 +1,10 @@
+// Comando de compilação: gcc -o gera_binario gera_binario.c
+// Método de uso: ./gera_binario <arquivo_binario> <quantidade_numeros>
+// Exemplo de uso: ./gera_binario arquivo.bin 1000
+// Isso gerará um arquivo binário chamado 'arquivo.bin' contendo 1000 números aleatórios.
+// Os números são gerados aleatoriamente e podem variar a cada execução do programa.
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
