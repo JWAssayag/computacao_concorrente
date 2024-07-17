@@ -4,11 +4,11 @@ As matrizes de entrada são lidas a partir de arquivos binários, e o resultado 
 O número de threads a serem utilizadas é especificado como um argumento de linha de comando.
 
 Instruções de uso:
-Compile o código fornecido com um compilador C compatível e execute o programa da seguinte maneira:
+execute o programa da seguinte maneira:
 para os teste foi compilado com gcc -o saida multmatconc.c timer.h -lm
 ./nome_do_executavel <arquivo_matriz1> <arquivo_matriz2> <arquivo_saida> <num_threads>
 
-Substitua <arquivo_matriz1>, <arquivo_matriz2>, <arquivo_saida> e <num_threads> pelos caminhos dos arquivos das duas matrizes de entrada, o arquivo de saída e o número de threads, respectivamente. Certifique-se de que os arquivos de entrada estejam no formato esperado . O programa calculará a multiplicação das duas matrizes utilizando o número de threads especificado e escreverá o resultado no arquivo de saída, além de imprimir o tempo total de execução em segundos.
+Substitua <arquivo_matriz1>, <arquivo_matriz2>, <arquivo_saida> e <num_threads> pelos caminhos dos arquivos das duas matrizes de entrada, o arquivo de saída e o número de threads, respectivamente. O programa calculará a multiplicação das duas matrizes utilizando o número de threads especificado e escreverá o resultado no arquivo de saída, além de imprimir o tempo total de execução em segundos.
 */
 #include <stdio.h>
 #include <stdlib.h>
