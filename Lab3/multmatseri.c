@@ -12,9 +12,8 @@ Substitua <arquivo_matriz1>, <arquivo_matriz2> e <arquivo_saida> pelos caminhos 
 */
 #include <stdio.h>
 #include <stdlib.h>
-#include "time.h" // Inclui a biblioteca time.h
+#include <time.h>
 
-// Função para multiplicação de matrizes
 void multiply(float *matrix1, float *matrix2, float *result, int rows1, int cols1, int cols2) {
     for (int i = 0; i < rows1; i++) {
         for (int j = 0; j < cols2; j++) {
@@ -28,7 +27,6 @@ void multiply(float *matrix1, float *matrix2, float *result, int rows1, int cols
 }
 
 int main(int argc, char *argv[]) {
-    // Verifica se foram fornecidos os argumentos corretos na linha de comando
     if (argc != 4) {
         printf("Uso: %s <arquivo_matriz1> <arquivo_matriz2> <arquivo_saida>\n", argv[0]);
         return 1;
@@ -44,6 +42,9 @@ int main(int argc, char *argv[]) {
     fp2 = fopen(file2, "rb");
     fout = fopen(outfile, "wb");
 
+    // Início da contagem do tempo de inicialização
+    clock_t start_init = clock();
+
     // Lê as dimensões da primeira matriz
     fread(&rows1, sizeof(int), 1, fp1);
     fread(&cols1, sizeof(int), 1, fp1);
@@ -58,7 +59,6 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    // Aloca memória para as matrizes e a matriz resultante
     float *matrix1 = (float *)malloc(rows1 * cols1 * sizeof(float));
     float *matrix2 = (float *)malloc(rows2 * cols2 * sizeof(float));
     float *result = (float *)malloc(rows1 * cols2 * sizeof(float)); // A matriz resultante não precisa ser inicializada com zeros
@@ -66,31 +66,39 @@ int main(int argc, char *argv[]) {
     fread(matrix1, sizeof(float), rows1 * cols1, fp1);
     fread(matrix2, sizeof(float), rows2 * cols2, fp2);
 
-    // Início da contagem do tempo total
-    clock_t start, finish;
-    double elapsed;
+    // Fim da contagem do tempo de inicialização
+    clock_t end_init = clock();
+    double elapsed_init = ((double)(end_init - start_init)) / CLOCKS_PER_SEC;
 
-    start = clock();
+    // Início da contagem do tempo de processamento
+    clock_t start_process = clock();
 
     // Calcula a multiplicação das matrizes sequencialmente
     multiply(matrix1, matrix2, result, rows1, cols1, cols2);
 
-    // Fim da contagem do tempo total
-    finish = clock();
-    elapsed = (double)(finish - start) / CLOCKS_PER_SEC;
+    // Fim da contagem do tempo de processamento
+    clock_t end_process = clock();
+    double elapsed_process = ((double)(end_process - start_process)) / CLOCKS_PER_SEC;
 
-    printf("Tempo total: %.6lf segundos\n", elapsed);
+    // Início da contagem do tempo de finalização
+    clock_t start_finalize = clock();
 
-    // Escreve as dimensões da matriz resultante no arquivo de saída
-    fwrite(&rows1, sizeof(int), 1, fout);
-    fwrite(&cols2, sizeof(int), 1, fout);
-    // Escreve os valores da matriz resultante no arquivo de saída
-    fwrite(result, sizeof(float), rows1 * cols2, fout);
+    fwrite(&rows1, sizeof(int), 1, fout); // Escreve as linhas da matriz resultante no arquivo de saída
+    fwrite(&cols2, sizeof(int), 1, fout); // Escreve as colunas da matriz resultante no arquivo de saída
+    fwrite(result, sizeof(float), rows1 * cols2, fout); // Escreve os valores da matriz resultante no arquivo de saída
 
-    // Fecha os arquivos e libera a memória alocada
     fclose(fp1);
     fclose(fp2);
     fclose(fout);
+
+    // Fim da contagem do tempo de finalização
+    clock_t end_finalize = clock();
+    double elapsed_finalize = ((double)(end_finalize - start_finalize)) / CLOCKS_PER_SEC;
+
+    printf("Tempo de inicialização: %.6f segundos\n", elapsed_init);
+    printf("Tempo de processamento: %.6f segundos\n", elapsed_process);
+    printf("Tempo de finalização: %.6f segundos\n", elapsed_finalize);
+
     free(matrix1);
     free(matrix2);
     free(result);
