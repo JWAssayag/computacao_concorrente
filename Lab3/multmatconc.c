@@ -13,13 +13,31 @@ Substitua <arquivo_matriz1>, <arquivo_matriz2>, <arquivo_saida> e <num_threads> 
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
-#include "timer.h" // Inclui o arquivo timer.h
+#include <time.h>
 
-#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+typedef struct {
+    int row_start;
+    int row_end;
+    float *matrix1;
+    float *matrix2;
+    float *result;
+    int rows1;
+    int cols1;
+    int cols2;
+} thread_args;
 
-// Função de multiplicação de matriz
-void multiply(float *matrix1, float *matrix2, float *result, int rows1, int cols1, int cols2) {
-    for (int i = 0; i < rows1; i++) {
+void *multiply(void *arg) {
+    thread_args *args = (thread_args *)arg;
+    int row_start = args->row_start;
+    int row_end = args->row_end;
+    float *matrix1 = args->matrix1;
+    float *matrix2 = args->matrix2;
+    float *result = args->result;
+    int rows1 = args->rows1;
+    int cols1 = args->cols1;
+    int cols2 = args->cols2;
+
+    for (int i = row_start; i < row_end; i++) {
         for (int j = 0; j < cols2; j++) {
             float sum = 0.0;
             for (int k = 0; k < cols1; k++) {
@@ -28,6 +46,8 @@ void multiply(float *matrix1, float *matrix2, float *result, int rows1, int cols
             result[i * cols2 + j] = sum;
         }
     }
+
+    pthread_exit(NULL);
 }
 
 int main(int argc, char *argv[]) {
@@ -42,8 +62,7 @@ int main(int argc, char *argv[]) {
     int num_threads = atoi(argv[4]);
 
     FILE *fp1, *fp2, *fout;
-    int rows1, cols1, rows2, cols2;
-
+    int rows1, cols1, rows2, cols2; // Variáveis para as dimensões das matrizes
     fp1 = fopen(file1, "rb");
     fp2 = fopen(file2, "rb");
     fout = fopen(outfile, "wb");
@@ -64,30 +83,63 @@ int main(int argc, char *argv[]) {
 
     float *matrix1 = (float *)malloc(rows1 * cols1 * sizeof(float));
     float *matrix2 = (float *)malloc(rows2 * cols2 * sizeof(float));
-    float *result = (float *)malloc(rows1 * cols2 * sizeof(float));
+    float *result = (float *)malloc(rows1 * cols2 * sizeof(float)); // A matriz resultante não precisa ser inicializada com zeros
 
     fread(matrix1, sizeof(float), rows1 * cols1, fp1);
     fread(matrix2, sizeof(float), rows2 * cols2, fp2);
 
-    // Marca o tempo de início da execução
-    double start, finish, elapsed;
-    GET_TIME(start);
+    pthread_t threads[num_threads];
+    thread_args args[num_threads];
 
-    // Multiplica as matrizes
-    multiply(matrix1, matrix2, result, rows1, cols1, cols2);
+    // Início da contagem do tempo de inicialização
+    clock_t start_init = clock();
 
-    // Marca o tempo de fim da execução
-    GET_TIME(finish);
+    // Divide as linhas da primeira matriz entre as threads
+    int rows_per_thread = rows1 / num_threads;
+    int remaining_rows = rows1 % num_threads;
+    int row_start = 0;
+    for (int i = 0; i < num_threads; i++) {
+        int row_end = row_start + rows_per_thread;
+        if (i == num_threads - 1) {
+            // A última thread fica com as linhas restantes
+            row_end += remaining_rows;
+        }
+        args[i].row_start = row_start;
+        args[i].row_end = row_end;
+        args[i].matrix1 = matrix1;
+        args[i].matrix2 = matrix2;
+        args[i].result = result;
+        args[i].rows1 = rows1; // Usamos as linhas da primeira matriz
+        args[i].cols1 = cols1; // Usamos as colunas da primeira matriz
+        args[i].cols2 = cols2; // Usamos as colunas da segunda matriz
 
-    // Calcula o tempo de execução
-    elapsed = finish - start;
+        pthread_create(&threads[i], NULL, multiply, (void *)&args[i]);
+        
+        row_start = row_end;
+    }
 
-    printf("Tempo de execução: %.6lf segundos\n", elapsed); // Modificado para usar vírgula
+    // Fim da contagem do tempo de inicialização
+    clock_t end_init = clock();
+    double elapsed_init = ((double)(end_init - start_init)) / CLOCKS_PER_SEC;
 
-    // Escreve a matriz resultante no arquivo de saída
-    fwrite(&rows1, sizeof(int), 1, fout);
-    fwrite(&cols2, sizeof(int), 1, fout);
-    fwrite(result, sizeof(float), rows1 * cols2, fout);
+    // Início da contagem do tempo de processamento
+    clock_t start_process = clock();
+
+    // Espera todas as threads terminarem
+    for (int i = 0; i < num_threads; i++) {
+        pthread_join(threads[i], NULL);
+    }
+
+    // Fim da contagem do tempo de processamento
+    clock_t end_process = clock();
+    double elapsed_process = ((double)(end_process - start_process)) / CLOCKS_PER_SEC;
+
+    // Início da contagem do tempo de finalização
+    clock_t start_finalize = clock();
+
+    fwrite(&rows1, sizeof(int), 1, fout); // Escreve as linhas da matriz resultante no arquivo de saída
+    fwrite(&cols2, sizeof(int), 1, fout); // Escreve as colunas da matriz resultante no arquivo de saída
+    fwrite(result, sizeof(float), rows1 * cols2, fout); // Escreve os valores da matriz resultante no arquivo de saída
 
     fclose(fp1);
     fclose(fp2);
@@ -96,6 +148,14 @@ int main(int argc, char *argv[]) {
     free(matrix1);
     free(matrix2);
     free(result);
+
+    // Fim da contagem do tempo de finalização
+    clock_t end_finalize = clock();
+    double elapsed_finalize = ((double)(end_finalize - start_finalize)) / CLOCKS_PER_SEC;
+
+    printf("Tempo de inicialização: %.6f segundos\n", elapsed_init);
+    printf("Tempo de processamento: %.6f segundos\n", elapsed_process);
+    printf("Tempo de finalização: %.6f segundos\n", elapsed_finalize);
 
     return 0;
 }
