@@ -4,72 +4,106 @@
  * seguido dos valores (float) de todas as celulas da matriz gerados aleatoriamente
  * */
 
-#include<stdio.h>
-#include<stdlib.h>
-#include<time.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
-//descomentar o define abaixo caso deseje imprimir uma versao truncada da matriz gerada no formato texto
-#define TEXTO 
+/*
+   Programa para gerar duas matrizes aleatórias de tamanho especificado
+   e salvar cada uma delas em um arquivo binário.
 
-int main(int argc, char*argv[]) {
-   float *matriz; //matriz que será gerada
-   int linhas, colunas; //dimensoes da matriz
-   long long int tam; //qtde de elementos na matriz
-   FILE * descritorArquivo; //descritor do arquivo de saida
-   size_t ret; //retorno da funcao de escrita no arquivo de saida
-   
-   //recebe os argumentos de entrada
-   if(argc < 4) {
-      fprintf(stderr, "Digite: %s <linhas> <colunas> <arquivo saida>\n", argv[0]);
-      return 1;
-   }
-   linhas = atoi(argv[1]); 
-   colunas = atoi(argv[2]);
-   tam = linhas * colunas;
+   Uso: ./nome_do_programa <linhas> <colunas> <arquivo_saida1> <arquivo_saida2>
 
-   //aloca memoria para a matriz
-   matriz = (float*) malloc(sizeof(float) * tam);
-   if(!matriz) {
-      fprintf(stderr, "Erro de alocao da memoria da matriz\n");
-      return 2;
-   }
+   Parâmetros:
+     - linhas: número de linhas das matrizes
+     - colunas: número de colunas das matrizes
+     - arquivo_saida1: nome do arquivo binário para salvar a primeira matriz
+     - arquivo_saida2: nome do arquivo binário para salvar a segunda matriz
+*/
 
-   //preenche a matriz com valores float aleatorios
-   //randomiza a sequencia de numeros aleatorios
-   srand(time(NULL));
-   for(long int i=0; i<tam; i++) {
-       *(matriz+i) = (rand() % 1000) * 0.3;
-   }
+// Função para gerar uma matriz aleatória
+float** gerarMatriz(int linhas, int colunas) {
+    float** matriz = (float**)malloc(linhas * sizeof(float*));
+    for (int i = 0; i < linhas; i++) {
+        matriz[i] = (float*)malloc(colunas * sizeof(float));
+        for (int j = 0; j < colunas; j++) {
+            matriz[i][j] = (float)rand() / RAND_MAX; // Valor aleatório entre 0 e 1
+        }
+    }
+    return matriz;
+}
 
-   //imprimir na saida padrao a matriz gerada
-   #ifdef TEXTO
-   for(int i=0; i<linhas; i++) {
-      for(int j=0; j<colunas; j++)
-        fprintf(stdout, "%.6f ", matriz[i*colunas+j]);
-      fprintf(stdout, "\n");
-   }
-   #endif
+// Função para salvar uma matriz em um arquivo binário
+void salvarMatriz(float** matriz, int linhas, int colunas, char* nomeArquivo) {
+    FILE* arquivo = fopen(nomeArquivo, "wb");
+    if (arquivo == NULL) {
+        perror("Erro ao criar o arquivo");
+        exit(EXIT_FAILURE);
+    }
 
-   //escreve a matriz no arquivo
-   //abre o arquivo para escrita binaria
-   descritorArquivo = fopen(argv[3], "wb");
-   if(!descritorArquivo) {
-      fprintf(stderr, "Erro de abertura do arquivo\n");
-      return 3;
-   }
-   //escreve numero de linhas e de colunas
-   ret = fwrite(&linhas, sizeof(int), 1, descritorArquivo);
-   ret = fwrite(&colunas, sizeof(int), 1, descritorArquivo);
-   //escreve os elementos da matriz
-   ret = fwrite(matriz, sizeof(float), tam, descritorArquivo);
-   if(ret < tam) {
-      fprintf(stderr, "Erro de escrita no  arquivo\n");
-      return 4;
-   }
+    // Escrevendo as dimensões da matriz no arquivo
+    fwrite(&linhas, sizeof(int), 1, arquivo);
+    fwrite(&colunas, sizeof(int), 1, arquivo);
 
-   //finaliza o uso das variaveis
-   fclose(descritorArquivo);
-   free(matriz);
-   return 0;
+    // Escrevendo os elementos da matriz no arquivo
+    for (int i = 0; i < linhas; i++) {
+        fwrite(matriz[i], sizeof(float), colunas, arquivo);
+    }
+
+    fclose(arquivo);
+}
+
+// Função para liberar a memória alocada para a matriz
+void liberarMatriz(float** matriz, int linhas) {
+    for (int i = 0; i < linhas; i++) {
+        free(matriz[i]);
+    }
+    free(matriz);
+}
+
+int main(int argc, char *argv[]) {
+    if (argc < 5) {
+        fprintf(stderr, "Digite: %s <linhas> <colunas> <arquivo_saida1> <arquivo_saida2>\n", argv[0]);
+        return 1;
+    }
+
+    int linhas = atoi(argv[1]);
+    int colunas = atoi(argv[2]);
+    char* nomeArquivo1 = argv[3];
+    char* nomeArquivo2 = argv[4];
+
+    srand(time(NULL)); // Inicializa o gerador de números aleatórios com o tempo atual
+
+    // Gerando a primeira matriz aleatória
+    float** matriz1 = gerarMatriz(linhas, colunas);
+    printf("Matriz 1 gerada:\n");
+    for (int i = 0; i < linhas; i++) {
+        for (int j = 0; j < colunas; j++) {
+            printf("%.2f\t", matriz1[i][j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
+
+    // Gerando a segunda matriz aleatória
+    float** matriz2 = gerarMatriz(linhas, colunas);
+    printf("Matriz 2 gerada:\n");
+    for (int i = 0; i < linhas; i++) {
+        for (int j = 0; j < colunas; j++) {
+            printf("%.2f\t", matriz2[i][j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
+
+    // Salvando as matrizes em arquivos binários
+    salvarMatriz(matriz1, linhas, colunas, nomeArquivo1);
+    salvarMatriz(matriz2, linhas, colunas, nomeArquivo2);
+
+    // Liberando memória
+    liberarMatriz(matriz1, linhas);
+    liberarMatriz(matriz2, linhas);
+
+    return 0;
 }
 
